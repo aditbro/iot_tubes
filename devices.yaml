@@ -1,0 +1,4 @@
+devices:
+- name: "device1"
+  sensor_topic: "/dev/1/sensor_data"
+  alert_topic: "/dev/1/alert"
