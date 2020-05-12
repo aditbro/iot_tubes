@@ -1,0 +1,11 @@
+groups:
+- name: high_co2
+  rules: 
+    - alert: HighCO2
+      expr: co2_device_data_percent > 30
+      for: 5s
+      labels:
+        app: iot_monitoring
+        severity: critical
+      annotations:
+        summary: "Dangerous co2 level on {{ $labels.id }} detected: {{ $value }}"

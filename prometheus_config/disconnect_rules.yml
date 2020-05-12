@@ -1,0 +1,11 @@
+groups:
+- name: device_disconnected_too_long
+  rules: 
+    - alert: DeviceDisconnected
+      expr: changes(co2_device_data_percent[2m]) < 1
+      for: 1m
+      labels:
+        app: iot_monitoring
+        severity: critical
+      annotations:
+        summary: "No data changes on {{ $labels.id }} detected for 5 minutes"
