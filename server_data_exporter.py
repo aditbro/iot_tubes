@@ -5,8 +5,10 @@ import threading
 import yaml
 
 from flask import Flask
+from flask import request
 
 metrics_data = {}
+mqtt_client = None
 
 def on_message(client, userdata, message):
     msg = message.payload.decode("utf-8")
@@ -45,9 +47,10 @@ def init_mqtt_connection(host, port):
 
     return client
 
-def mqtt_thread(host, port):
-    client = init_mqtt_connection(host, port)
-    client.loop_forever()
+def mqtt_thread_func(host, port):
+    global mqtt_client
+    mqtt_client = init_mqtt_connection(host, port)
+    mqtt_client.loop_forever()
 
 def subscribe_devices_sensor_topic(client, userdata, flags, rc):
     devices = load_devices_data('devices.yaml')
@@ -74,7 +77,21 @@ def show_metrics():
 
     return co2_data + temp_data
 
+@app.route('/alert', methods=['POST'])
+def sound_alert():
+    alert_json = request.get_json()
+    
+    for alert in alert_json['alerts']:
+        device_id = alert['labels']['id']
+        msg = alert['labels']['alertname']
+        topic = '/dev/{}/alert'.format(device_id)
+
+        print(msg, topic)
+        mqtt_client.publish(topic, msg)
+
+    return "OK"
+
 if __name__=='__main__':
-    mqtt_thread = threading.Thread(target=mqtt_thread, args=('localhost', 1883))
+    mqtt_thread = threading.Thread(target=mqtt_thread_func, args=('localhost', 1883))
     mqtt_thread.start()
     app.run('0.0.0.0', port=8000)
